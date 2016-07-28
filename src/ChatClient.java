@@ -11,7 +11,7 @@ public class ChatClient extends Frame{
     public void launchFrame() {
         setLocation(400,300);
         this.setSize(300,300);
-        setBackground(Color.black);
+        setBackground(Color.red);
         setVisible(true);
     }
 }
