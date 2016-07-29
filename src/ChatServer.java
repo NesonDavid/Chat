@@ -1,5 +1,7 @@
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -8,40 +10,78 @@ import java.net.Socket;
  */
 
 public class ChatServer {
-
+    ServerSocket ss = null;
+    boolean started = false;
 
     public static void main(String[] args) {
-        DataInputStream dis = null;
-        ServerSocket ss = null;
-        Socket s = null;
+        new ChatServer().start();
+    }
 
+    public void start() {
         try {
             ss = new ServerSocket(8848);
-        }catch (IOException e){
+            started = true;
+        } catch (BindException e) {
+            System.out.println("port is in use");
+            System.out.println("Please close corresponding application and restart");
+            System.exit(0);
+        } catch (IOException e){
             e.printStackTrace();
         }
 
         try{
-            while(true) {
-                boolean bConnected = false;
-                s = ss.accept();
+            while(started) {
+                Socket s = ss.accept();
+                Client c = new Client(s);
                 System.out.println("a client connected");
-                bConnected = true;
-                dis = new DataInputStream(s.getInputStream());
-                while(bConnected) {
-                        String str = dis.readUTF();
-                        System.out.println(str);
-                }
-                dis.close();
+                new Thread(c).start();
             }
         } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
             try {
-                dis.close();
-                s.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
+                ss.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            System.out.println("Client Disconnected");
         }
     }
+
+    class Client implements Runnable {
+        Socket s;
+        DataInputStream dis;
+        private boolean bConnected = false;
+
+        public Client(Socket s) {
+            this.s = s;
+            try {
+                dis = new DataInputStream(s.getInputStream());
+                bConnected = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (bConnected) {
+                    String str = dis.readUTF();
+                    System.out.println(str);
+                }
+            } catch (EOFException e) {
+                System.out.println("Client Disconnected");
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if(dis != null) dis.close();
+                    if(s != null) s.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+
 }

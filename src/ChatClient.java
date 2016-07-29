@@ -9,6 +9,7 @@ import java.awt.event.WindowEvent;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class ChatClient extends Frame{
 
@@ -44,6 +45,8 @@ public class ChatClient extends Frame{
             s = new Socket("127.0.0.1",8848);
             dos = new DataOutputStream(s.getOutputStream());
 System.out.println("connected");
+        } catch(UnknownHostException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
